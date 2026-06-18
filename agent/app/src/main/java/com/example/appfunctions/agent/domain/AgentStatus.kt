@@ -22,4 +22,11 @@ sealed class AgentStatus {
     object Thinking : AgentStatus()
 
     data class InvokingTool(val functionId: String, val packageName: String) : AgentStatus()
+
+    data class PendingToolApproval(
+        val functionId: String,
+        val packageName: String,
+        val callId: String,
+        val arguments: Map<String, Any?>,
+    ) : AgentStatus()
 }

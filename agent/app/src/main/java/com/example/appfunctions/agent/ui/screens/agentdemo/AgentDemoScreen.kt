@@ -318,6 +318,7 @@ fun AgentDemoLoadedScreen(
                             StatusIndicator(
                                 status = uiState.status,
                                 packageManager = packageManager,
+                                onEvent = onEvent,
                             )
                         }
                     }
@@ -608,6 +609,8 @@ fun ModelDropdown(
                     LlmModel.GEMINI_3_1_PRO_PREVIEW,
                     LlmModel.GEMINI_3_FLASH_PREVIEW,
                     LlmModel.GEMINI_3_1_FLASH_LITE_PREVIEW,
+                    LlmModel.GEMINI_3_5_FLASH,
+                    LlmModel.GEMMA_31_B,
                 )
             items(models) { model ->
                 DropdownMenuItem(
@@ -802,6 +805,7 @@ fun MessageBubble(
 fun StatusIndicator(
     status: AgentStatus,
     packageManager: PackageManager,
+    onEvent: (AgentUiEvent) -> Unit,
 ) {
     when (status) {
         AgentStatus.Thinking -> {
@@ -871,7 +875,50 @@ fun StatusIndicator(
                 }
             }
         }
-
+        is AgentStatus.PendingToolApproval -> {
+            // Placeholder for approval UI logic
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shadowElevation = 2.dp,
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Tool Call Requested",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Function: ${status.functionId}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Arguments: ${status.arguments}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        androidx.compose.material3.Button(
+                            onClick = { onEvent(AgentUiEvent.OnApproveToolCall(status.callId)) },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Allow")
+                        }
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { onEvent(AgentUiEvent.OnDenyToolCall) },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onTertiaryContainer)
+                        ) {
+                            Text("Deny")
+                        }
+                    }
+                }
+            }
+        }
         AgentStatus.Idle -> {
             // Nothing to show
         }

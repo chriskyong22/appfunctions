@@ -25,6 +25,8 @@ enum class LlmModel private constructor(val providerName: LlmProviderName, val m
     GEMINI_3_1_PRO_PREVIEW(LlmProviderName.GEMINI, "gemini-3.1-pro-preview"),
     GEMINI_3_FLASH_PREVIEW(LlmProviderName.GEMINI, "gemini-3-flash-preview"),
     GEMINI_3_1_FLASH_LITE_PREVIEW(LlmProviderName.GEMINI, "gemini-3.1-flash-lite-preview"),
+    GEMINI_3_5_FLASH(LlmProviderName.GEMINI, "gemini-3.5-flash"),
+    GEMMA_31_B(LlmProviderName.GEMINI, "gemma-4-31b-it"),
     ;
 
     companion object {

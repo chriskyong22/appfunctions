@@ -207,6 +207,12 @@ class AgentDemoViewModel
                         launchPendingIntentUseCase(pendingIntent)
                     }
                 }
+                is AgentUiEvent.OnApproveToolCall -> {
+                    agentOrchestrator.approveToolCall(event.callId)
+                }
+                is AgentUiEvent.OnDenyToolCall -> {
+                    agentOrchestrator.denyToolCall()
+                }
             }
         }
 

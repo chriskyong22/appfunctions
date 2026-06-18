@@ -70,6 +70,16 @@ class AgentOrchestrator
         /** The current status of the agent. */
         val status: StateFlow<AgentStatus> = _status.asStateFlow()
 
+        private var approvalResult = kotlinx.coroutines.CompletableDeferred<Boolean>()
+
+        fun approveToolCall(callId: String) {
+            approvalResult.complete(true)
+        }
+
+        fun denyToolCall() {
+            approvalResult.complete(false)
+        }
+
         /**
          * Observes messages for a specific thread and processes any pending agent responses. This
          * method suspends and collects messages until cancelled.
@@ -306,6 +316,19 @@ class AgentOrchestrator
         ): ExecuteToolCallsResult {
             val results = mutableListOf<ToolOutput>()
             for (toolCall in toolCalls) {
+                _status.value = AgentStatus.PendingToolApproval(
+                    toolCall.functionId,
+                    toolCall.packageName,
+                    toolCall.callId,
+                    toolCall.arguments
+                )
+                approvalResult = kotlinx.coroutines.CompletableDeferred()
+                
+                val isApproved = approvalResult.await()
+                if (!isApproved) {
+                    _status.value = AgentStatus.Idle
+                    return ExecuteToolCallsResult.Error
+                }
                 _status.value = AgentStatus.InvokingTool(toolCall.functionId, toolCall.packageName)
 
                 val matchingTool =
@@ -334,12 +357,25 @@ class AgentOrchestrator
                     }
 
                 if (appFunctionDataResult.isFailure) {
+                    /*
                     completeMessageWithError(
                         message.messageId,
                         message.threadId,
                         "Failed to convert arguments for ${toolCall.functionId}\n ${appFunctionDataResult.exceptionOrNull()}",
                     )
                     return ExecuteToolCallsResult.Error
+                    */
+
+                    // Report error to LLM to allow it to correct arguments
+                    val error = appFunctionDataResult.exceptionOrNull()
+                    results.add(
+                        ToolOutput(
+                            functionId = toolCall.functionId,
+                            callId = toolCall.callId,
+                            result = "Error: Invalid arguments. ${error?.message}",
+                        ),
+                    )
+                    continue
                 }
 
                 val executionResult =
